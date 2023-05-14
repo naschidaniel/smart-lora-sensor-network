@@ -78,6 +78,7 @@ fn main() -> ! {
     let mut co2_msg: String<20> = String::new();
     let mut pressure_msg: String<20> = String::new();
     let mut temperature_msg: String<20> = String::new();
+    let mut lora_msg: String<100> = String::new();
 
     // init Embedded Graphics
     let text_style: MonoTextStyle<BinaryColor> = MonoTextStyle::new(&FONT_8X13, BinaryColor::On);
@@ -116,14 +117,17 @@ fn main() -> ! {
         co2_msg.clear();
         temperature_msg.clear();
         pressure_msg.clear();
+        lora_msg.clear();
         write!(co2_msg, "CO2: {co2} ppm").unwrap();
         write!(temperature_msg, "T: {temperature} Deg C").unwrap();
         write!(pressure_msg, "P: {pressure} hPa").unwrap();
+        write!(
+            lora_msg,
+            "SENSOR_CO2\t{co2_msg}\t{warning}\t{temperature_msg}\t{pressure_msg}\tCOMPLETE\n"
+        )
+        .unwrap();
 
-        println!("{}", co2_msg);
-        println!("Warning: {}", warning);
-        println!("{}", temperature_msg);
-        println!("{}", pressure_msg);
+        println!("{}", lora_msg);
 
         Text::with_alignment(
             co2_msg.as_str(),
@@ -165,7 +169,7 @@ fn main() -> ! {
         display.flush().unwrap();
         display.clear();
 
-        serial1.write_str("SENSOR_CO2 556 ppm\n").unwrap();
+        serial1.write_str(lora_msg.as_str()).unwrap();
 
         // Wait 5 seconds
         led.set_low().unwrap();
