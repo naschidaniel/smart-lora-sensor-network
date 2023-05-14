@@ -1,0 +1,30 @@
+[package]
+name = "esp32-lora-co2-sensor"
+version = "0.1.0"
+authors = ["Daniel Naschberger <daniel@naschi.at>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "app"
+test = false
+bench = false
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug = true # Symbols are nice and they don't increase the size on Flash
+opt-level = "z"
+
+[dependencies]
+esp32-hal = "0.11.0"
+esp-backtrace = { version = "0.7.0", features = ["esp32", "panic-handler", "print-uart"] }
+esp-println = { version = "0.5.0", features = ["esp32"] }
+esp-alloc = "0.3.0"
+ee895 = "0.1.0"
+embedded-graphics = "0.7.1"
+embedded-hal = "0.2.7"
+shared-bus = "0.2.5"
+ssd1306 = "0.7.1"
+heapless = "0.7.16"
