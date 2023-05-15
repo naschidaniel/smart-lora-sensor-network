@@ -293,17 +293,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "esp32-hal"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28b4504f743b0598c381c8da25a00bb86f950f2fbc66c8e660eba365b29de005"
-dependencies = [
- "embedded-hal",
- "esp-hal-common",
-]
-
-[[package]]
-name = "esp32-lora-co2-sensor"
+name = "esp32-co2-sensor"
 version = "0.1.0"
 dependencies = [
  "ee895",
@@ -316,6 +306,16 @@ dependencies = [
  "heapless",
  "shared-bus",
  "ssd1306",
+]
+
+[[package]]
+name = "esp32-hal"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28b4504f743b0598c381c8da25a00bb86f950f2fbc66c8e660eba365b29de005"
+dependencies = [
+ "embedded-hal",
+ "esp-hal-common",
 ]
 
 [[package]]
