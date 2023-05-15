@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 
-use core::fmt::Write;
 use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
 use embedded_graphics::{
     mono_font::{ascii::FONT_9X15, ascii::FONT_9X15_BOLD, MonoTextStyle},
@@ -110,6 +109,7 @@ fn main() -> ! {
     let del_var = 20_u32.secs();
     let mut sensor_co2: String<100> = String::new();
     timer0.start(del_var);
+
     loop {
         wdt.feed();
         led.set_high().unwrap();
@@ -171,7 +171,6 @@ fn main() -> ! {
             .unwrap();
         }
         led.set_low().unwrap();
-        // Wait 5 seconds
         delay.delay_ms(1000u32);
     }
 }
