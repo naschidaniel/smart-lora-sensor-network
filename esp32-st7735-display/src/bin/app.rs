@@ -33,7 +33,11 @@ fn main() -> ! {
     let peripherals = Peripherals::take();
     let mut system = peripherals.DPORT.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
-    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let timer_group0 = TimerGroup::new(
+        peripherals.TIMG0,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut timer0 = timer_group0.timer0;
 
     // init Watchdog and RTC
@@ -69,7 +73,13 @@ fn main() -> ! {
         io.pins.gpio17.into_push_pull_output(),
         io.pins.gpio16.into_floating_input(),
     );
-    let mut serial1 = Uart::new_with_config(peripherals.UART1, Some(config), Some(pins), &clocks);
+    let mut serial1 = Uart::new_with_config(
+        peripherals.UART1,
+        Some(config),
+        Some(pins),
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
 
     // SPI Display Settings
     let sck = io.pins.gpio18; // sck
