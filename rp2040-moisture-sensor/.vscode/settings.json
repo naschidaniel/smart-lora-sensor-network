@@ -1,0 +1,11 @@
+{
+    "rust-analyzer.server.path": null,
+    "rust-analyzer.cargo.buildScripts.useRustcWrapper": false,
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.cargo.buildScripts.overrideCommand": null,
+    "rust-analyzer.cargo.target": "thumbv6m-none-eabi",
+    "rust-analyzer.check.extraArgs": [
+        "--target",
+        "thumbv6m-none-eabi"
+    ]
+}

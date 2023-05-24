@@ -117,7 +117,7 @@ fn main() -> ! {
     delay.delay_ms(5000u32);
 
     let del_var = 20_u32.secs();
-    let mut sensor_co2: String<100> = String::new();
+    let mut lora_msg: String<100> = String::new();
     timer0.start(del_var);
 
     loop {
@@ -125,13 +125,13 @@ fn main() -> ! {
         led.set_high().unwrap();
 
         serial1.flush().unwrap();
-        sensor_co2.clear();
+        lora_msg.clear();
         loop {
             let byte = serial1.read();
             match byte {
                 Ok(b) => {
                     let c: char = char::from(b);
-                    sensor_co2.push(c);
+                    lora_msg.push(c);
                 }
                 Err(_) => {
                     println!("Error reading");
@@ -139,9 +139,13 @@ fn main() -> ! {
                 }
             }
         }
-        if sensor_co2.contains("SENSOR_CO2") && sensor_co2.contains("COMPLETE") {
-            println!("{}", sensor_co2);
-            let lora_msg: Vec<&str, 6> = sensor_co2.split('\t').collect();
+        if lora_msg.contains("SENSOR_MOISTURE") && lora_msg.contains("COMPLETE_MOISTURE") {
+            println!("{}", lora_msg);
+        }
+
+        if lora_msg.contains("SENSOR_CO2") && lora_msg.contains("COMPLETE_CO2") {
+            println!("{}", lora_msg);
+            let lora_msg: Vec<&str, 6> = lora_msg.split('\t').collect();
 
             color = match lora_msg[2] {
                 v if v == "Fresh" => Rgb565::BLUE,
@@ -181,6 +185,6 @@ fn main() -> ! {
             .unwrap();
         }
         led.set_low().unwrap();
-        delay.delay_ms(1000u32);
+        delay.delay_ms(500u32);
     }
 }

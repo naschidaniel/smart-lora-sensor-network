@@ -133,7 +133,7 @@ fn main() -> ! {
         write!(pressure_msg, "P: {pressure} hPa").unwrap();
         write!(
             lora_msg,
-            "SENSOR_CO2\t{co2_msg}\t{warning}\t{temperature_msg}\t{pressure_msg}\tCOMPLETE\n"
+            "SENSOR_CO2\t{co2_msg}\t{warning}\t{temperature_msg}\t{pressure_msg}\tCOMPLETE_CO2\n"
         )
         .unwrap();
 
