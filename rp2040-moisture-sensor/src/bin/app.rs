@@ -4,7 +4,11 @@
 use core::fmt::Write;
 use defmt::info;
 use defmt_rtt as _;
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::{
+    adc::OneShot,
+    digital::v2::OutputPin,
+    watchdog::{Watchdog, WatchdogEnable},
+};
 use fugit::{ExtU32, RateExtU32};
 use panic_probe as _;
 use rp_pico::entry;
@@ -15,10 +19,10 @@ use embedded_graphics::{
     prelude::*,
     text::{Alignment, Text},
 };
-use embedded_hal::watchdog::{Watchdog, WatchdogEnable};
 use heapless::String;
 use rp2040_hal as hal;
 use rp_pico::hal::{
+    adc::Adc,
     clocks::{init_clocks_and_plls, Clock},
     pac,
     sio::Sio,
@@ -75,9 +79,9 @@ fn main() -> ! {
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
+    display.clear();
 
     // init Embedded Graphics
-    let text_style: MonoTextStyle<BinaryColor> = MonoTextStyle::new(&FONT_8X13, BinaryColor::On);
     let text_style_big = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
 
     let mut led_pin: rp_pico::hal::gpio::Pin<
@@ -96,25 +100,37 @@ fn main() -> ! {
         )
         .unwrap();
 
-    let mut moisture_msg: String<20> = String::new();
-    write!(moisture_msg, "SOIL: 123.0 g/m^3").unwrap();
+    // read moisture sensor
+    let mut adc = Adc::new(pac.ADC, &mut pac.RESETS);
+    let mut adc_pin_0: hal::gpio::Pin<
+        hal::gpio::bank0::Gpio26,
+        hal::gpio::Input<hal::gpio::Floating>,
+    > = pins.gpio26.into_floating_input();
+    let adc_pin_0_max: u16 = 3080;
+    let adc_pin_0_min: u16 = 1700;
+    let mut moisture_1_msg: String<20> = String::new();
     let mut lora_msg: String<100> = String::new();
 
     loop {
         info!("on!");
         watchdog.feed();
         lora_msg.clear();
+        let adc_pin_0_counts: u16 = adc.read(&mut adc_pin_0).unwrap();
+        let moisture =
+            (adc_pin_0_counts as f32) / (adc_pin_0_max as f32 - adc_pin_0_min as f32) * 100.0;
+        moisture_1_msg.clear();
+        write!(moisture_1_msg, "SOIL1: {moisture:.1}%").unwrap();
         write!(
             lora_msg,
-            "SENSOR_MOISTURE\t{moisture_msg}\tCOMPLETE_MOISTURE\n"
+            "SENSOR_MOISTURE\tADC1: {adc_pin_0_counts}\t{moisture_1_msg}\tCOMPLETE_MOISTURE\n"
         )
         .unwrap();
         led_pin.set_high().unwrap();
 
         Text::with_alignment(
-            &moisture_msg.as_str(),
-            display.bounding_box().center() + Point::new(0, 32),
-            text_style,
+            &moisture_1_msg.as_str(),
+            display.bounding_box().center() + Point::new(0, 5),
+            text_style_big,
             Alignment::Center,
         )
         .draw(&mut display)
