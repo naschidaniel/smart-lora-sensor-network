@@ -9,15 +9,22 @@ use fugit::{ExtU32, RateExtU32};
 use panic_probe as _;
 use rp_pico::entry;
 
-use rp2040_hal as hal;
+use embedded_graphics::{
+    mono_font::{ascii::FONT_8X13, ascii::FONT_9X15_BOLD, MonoTextStyle},
+    pixelcolor::BinaryColor,
+    prelude::*,
+    text::{Alignment, Text},
+};
 use embedded_hal::watchdog::{Watchdog, WatchdogEnable};
 use heapless::String;
+use rp2040_hal as hal;
 use rp_pico::hal::{
     clocks::{init_clocks_and_plls, Clock},
     pac,
     sio::Sio,
     uart::{DataBits, StopBits, UartConfig},
 };
+use ssd1306::{prelude::*, Ssd1306};
 
 #[entry]
 fn main() -> ! {
@@ -51,6 +58,28 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
+    let sda_pin = pins.gpio16.into_mode::<hal::gpio::FunctionI2C>();
+    let scl_pin = pins.gpio17.into_mode::<hal::gpio::FunctionI2C>();
+
+    // init I2C
+    let i2c = hal::I2C::i2c0(
+        pac.I2C0,
+        sda_pin,
+        scl_pin,
+        10u32.kHz(),
+        &mut pac.RESETS,
+        &clocks.peripheral_clock,
+    );
+
+    let interface = ssd1306::I2CDisplayInterface::new(i2c);
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().unwrap();
+
+    // init Embedded Graphics
+    let text_style: MonoTextStyle<BinaryColor> = MonoTextStyle::new(&FONT_8X13, BinaryColor::On);
+    let text_style_big = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
+
     let mut led_pin: rp_pico::hal::gpio::Pin<
         rp_pico::hal::gpio::bank0::Gpio25,
         rp_pico::hal::gpio::Output<rp_pico::hal::gpio::PushPull>,
@@ -81,6 +110,20 @@ fn main() -> ! {
         )
         .unwrap();
         led_pin.set_high().unwrap();
+
+        Text::with_alignment(
+            &moisture_msg.as_str(),
+            display.bounding_box().center() + Point::new(0, 32),
+            text_style,
+            Alignment::Center,
+        )
+        .draw(&mut display)
+        .unwrap();
+
+        // Write buffer to display and clear display buffer
+        display.flush().unwrap();
+        display.clear();
+
         delay.delay_ms(1000);
         uart.write_str(lora_msg.as_str()).unwrap();
         info!("off!");
