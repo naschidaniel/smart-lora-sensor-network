@@ -116,8 +116,10 @@ fn main() -> ! {
         watchdog.feed();
         lora_msg.clear();
         let adc_pin_0_counts: u16 = adc.read(&mut adc_pin_0).unwrap();
-        let moisture =
-            (adc_pin_0_counts as f32) / (adc_pin_0_max as f32 - adc_pin_0_min as f32) * 100.0;
+        let moisture = 100.0
+            - (adc_pin_0_counts as f32 - adc_pin_0_min as f32)
+                / (adc_pin_0_max as f32 - adc_pin_0_min as f32)
+                * 100.0;
         moisture_1_msg.clear();
         write!(moisture_1_msg, "SOIL1: {moisture:.1}%").unwrap();
         write!(
