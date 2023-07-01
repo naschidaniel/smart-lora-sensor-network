@@ -23,8 +23,8 @@ esp-backtrace = { version = "0.7.0", features = ["esp32", "panic-handler", "prin
 esp-println = { version = "0.5.0", features = ["esp32"] }
 esp-alloc = "0.3.0"
 ee895 = "0.1.0"
-embedded-graphics = "0.7.1"
+embedded-graphics = "0.8.0"
 embedded-hal = "0.2.7"
 shared-bus = "0.2.5"
-ssd1306 = "0.7.1"
+ssd1306 = "0.8.0"
 heapless = "0.7.16"

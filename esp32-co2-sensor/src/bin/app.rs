@@ -103,7 +103,7 @@ fn main() -> ! {
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
-    display.clear();
+    display.clear(BinaryColor::Off).unwrap();
 
     loop {
         wdt.feed();
@@ -122,7 +122,7 @@ fn main() -> ! {
             _ => "Hazardous",
         };
 
-        display.clear();
+        display.clear(BinaryColor::Off).unwrap();
 
         co2_msg.clear();
         temperature_msg.clear();
@@ -177,7 +177,7 @@ fn main() -> ! {
 
         // Write buffer to display and clear display buffer
         display.flush().unwrap();
-        display.clear();
+        display.clear(BinaryColor::Off).unwrap();
 
         serial1.write_str(lora_msg.as_str()).unwrap();
 
