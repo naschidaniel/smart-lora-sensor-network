@@ -131,7 +131,7 @@ fn main() -> ! {
             match byte {
                 Ok(b) => {
                     let c: char = char::from(b);
-                    lora_msg.push(c);
+                    lora_msg.push(c).unwrap();
                 }
                 Err(_) => {
                     println!("Error reading");
