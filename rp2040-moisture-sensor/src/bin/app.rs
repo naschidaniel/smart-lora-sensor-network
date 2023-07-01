@@ -79,7 +79,7 @@ fn main() -> ! {
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
-    display.clear();
+    display.clear(BinaryColor::Off).unwrap();
 
     // init Embedded Graphics
     let text_style_big = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
@@ -140,7 +140,7 @@ fn main() -> ! {
 
         // Write buffer to display and clear display buffer
         display.flush().unwrap();
-        display.clear();
+        display.clear(BinaryColor::Off).unwrap();
 
         delay.delay_ms(1000);
         uart.write_str(lora_msg.as_str()).unwrap();
