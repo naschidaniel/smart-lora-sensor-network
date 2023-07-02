@@ -1,11 +1,12 @@
 #![no_std]
 #![no_main]
 
-use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
 use embedded_graphics::{
-    mono_font::{ascii::FONT_9X15, ascii::FONT_9X15_BOLD, MonoTextStyle},
+    image::{Image, ImageRaw, ImageRawLE},
+    mono_font::{ascii::FONT_8X13, ascii::FONT_9X15, ascii::FONT_9X15_BOLD, MonoTextStyle},
     pixelcolor::Rgb565,
     prelude::*,
+    primitives::{Circle, PrimitiveStyle},
     text::Text,
 };
 use esp32_hal::{
@@ -50,7 +51,8 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     // Embedded Graphics
-    let style = MonoTextStyle::new(&FONT_9X15, Rgb565::WHITE);
+    let text_style_small = MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE);
+    let text_style_medium = MonoTextStyle::new(&FONT_9X15, Rgb565::WHITE);
     let text_style_big = MonoTextStyle::new(&FONT_9X15_BOLD, Rgb565::WHITE);
 
     // init io
@@ -116,8 +118,18 @@ fn main() -> ! {
 
     delay.delay_ms(5000u32);
 
-    let del_var = 20_u32.secs();
-    let mut lora_msg: String<100> = String::new();
+    let del_var = 30_u32.secs();
+    let mut lora_msg: String<150> = String::new();
+    let mut co2_msg: String<50> = String::from("-");
+    let mut co2_warning_msg: String<50> = String::from("-");
+    let mut t_msg: String<50> = String::from("-");
+    let mut p_msg: String<50> = String::from("-");
+    let mut soil1_msg: String<50> = String::from("-");
+    let mut soil2_msg: String<50> = String::from("-");
+    let mut soil3_msg: String<50> = String::from("-");
+    let mut co2_sensor_available = false;
+    let mut display_values_update = false;
+
     timer0.start(del_var);
 
     loop {
@@ -131,7 +143,7 @@ fn main() -> ! {
             match byte {
                 Ok(b) => {
                     let c: char = char::from(b);
-                    lora_msg.push(c).unwrap();
+                    let _ = lora_msg.push(c);
                 }
                 Err(_) => {
                     println!("Error reading");
@@ -139,15 +151,47 @@ fn main() -> ! {
                 }
             }
         }
+        println!("{}", lora_msg);
+
         if lora_msg.contains("SENSOR_MOISTURE") && lora_msg.contains("COMPLETE_MOISTURE") {
             println!("{}", lora_msg);
+            display_values_update = true;
+            let moisture_sensor_msg: Vec<&str, 8> = lora_msg.split('\t').collect();
+            soil1_msg.clear();
+            soil1_msg = moisture_sensor_msg[2].into();
+            soil2_msg.clear();
+            soil2_msg = moisture_sensor_msg[4].into();
+            soil3_msg.clear();
+            soil3_msg = moisture_sensor_msg[6].into();
         }
 
         if lora_msg.contains("SENSOR_CO2") && lora_msg.contains("COMPLETE_CO2") {
             println!("{}", lora_msg);
-            let lora_msg: Vec<&str, 6> = lora_msg.split('\t').collect();
+            co2_sensor_available = true;
+            display_values_update = true;
 
-            color = match lora_msg[2] {
+            let co2_sensor_msg: Vec<&str, 6> = lora_msg.split('\t').collect();
+            co2_msg.clear();
+            co2_msg = co2_sensor_msg[1].into();
+            co2_warning_msg.clear();
+            co2_warning_msg = co2_sensor_msg[2].into();
+            t_msg.clear();
+            t_msg = co2_sensor_msg[3].into();
+            p_msg.clear();
+            p_msg = co2_sensor_msg[4].into();
+
+            timer0.start(del_var);
+        }
+
+        if timer0.wait() == Ok(()) {
+            println!("reset timer");
+            co2_sensor_available = false;
+        }
+
+        if co2_sensor_available && display_values_update {
+            display_values_update = false;
+            display.clear(Rgb565::BLACK).unwrap();
+            color = match &co2_warning_msg {
                 v if v == "Fresh" => Rgb565::BLUE,
                 v if v == "Good" => Rgb565::GREEN,
                 v if v == "Moderate" => Rgb565::CSS_ORANGE,
@@ -155,27 +199,34 @@ fn main() -> ! {
                 v if v == "Dangerous" => Rgb565::CSS_VIOLET,
                 _ => Rgb565::CSS_DARK_VIOLET,
             };
-            display.clear(color).unwrap();
-
-            Text::new(lora_msg[1], Point::new(05, 30), text_style_big)
+            Text::new(&co2_msg, Point::new(05, 20), text_style_big)
                 .draw(&mut display)
                 .unwrap();
-            Text::new(lora_msg[2], Point::new(05, 55), text_style_big)
+            Text::new(&co2_warning_msg, Point::new(05, 40), text_style_big)
                 .draw(&mut display)
                 .unwrap();
-            Text::new(lora_msg[3], Point::new(05, 80), style)
+            Circle::new(Point::new(127, 03), 30)
+                .into_styled(PrimitiveStyle::with_fill(color))
                 .draw(&mut display)
                 .unwrap();
-            Text::new(lora_msg[4], Point::new(05, 105), style)
+            Text::new(&t_msg, Point::new(05, 60), text_style_medium)
                 .draw(&mut display)
                 .unwrap();
-            timer0.start(del_var);
+            Text::new(&p_msg, Point::new(05, 75), text_style_medium)
+                .draw(&mut display)
+                .unwrap();
+            Text::new(&soil1_msg, Point::new(05, 90), text_style_small)
+                .draw(&mut display)
+                .unwrap();
+            Text::new(&soil2_msg, Point::new(05, 105), text_style_small)
+                .draw(&mut display)
+                .unwrap();
+            Text::new(&soil3_msg, Point::new(05, 120), text_style_small)
+                .draw(&mut display)
+                .unwrap();
         }
-
-        if timer0.wait() == Ok(()) {
-            println!("reset timer");
+        if !co2_sensor_available {
             display.clear(Rgb565::RED).unwrap();
-
             Text::new(
                 "The CO2-Sensor\nis not\navailable!",
                 Point::new(05, 30),
